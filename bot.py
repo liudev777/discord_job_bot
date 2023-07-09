@@ -1,7 +1,7 @@
 from pprint import pp
 import lightbulb
 import hikari
-from hikari import Embed
+from hikari import Color, Embed
 import os
 import dotenv
 from jsearch import Jsearch
@@ -33,6 +33,13 @@ class LocationView(miru.View):
         await handle_role(ctx, 1119033975680270346, "Chicago")
 
 
+class JobTypeView(miru.View):
+    @miru.button(label="Internship", style=hikari.ButtonStyle.PRIMARY)
+    async def button1(self, button: miru.Button, ctx: miru.ViewContext) -> None:
+        await handle_role(ctx, 1120028088059830343, "Internship")
+
+
+# if user already has discord role, delete role, else add role
 async def handle_role(ctx, role_id, job_title):
     user = ctx.author
     user_id = ctx.author.id
@@ -48,9 +55,38 @@ async def handle_role(ctx, role_id, job_title):
     print(f"{user} chose {job_title}!")
 
 
+async def post_jobs():
+    print("posting jobs\n")
+    guild_id = 1115031539256926278
+    members = await bot.rest.fetch_members(guild_id)
+    unique_role_combination = set()
+    unique_role_colors = set()
+    excluded_role_colors = [Color(0x00000), Color(0xf1c40f)]
+
+    me = bot.get_me()
+
+    for member in members:
+        # skip if member is bot
+        if member.id == me.id:
+            continue
+        
+        roles = await member.fetch_roles()
+        role_ids = tuple([role.name for role in roles if role.color not in excluded_role_colors])
+        unique_role_combination.add(role_ids)
+        role_colors = tuple([role.color for role in roles if role.color not in excluded_role_colors])
+        unique_role_colors.add(role_colors)
+
+
+    print(len(unique_role_combination))
+    print(unique_role_combination)
+    print(unique_role_colors)
+    
+
+
 miru.install(bot) # Start miru
 
 
+# displays buttons that allow user to select roles
 @bot.listen()
 async def buttons(event: hikari.GuildMessageCreateEvent) -> None:
 
@@ -64,9 +100,11 @@ async def buttons(event: hikari.GuildMessageCreateEvent) -> None:
     locationView = LocationView(timeout=None)
     fieldEmbed = Embed(title="Field", description="Pick a Job!\nSelect Job Again To Remove Role", color=0x00ff00)  # Green
     locationEmbed = Embed(title="Location", description="Pick a location!")
+
     fieldMessage = await event.message.respond(embed=fieldEmbed, components=fieldView)
-    locationMessage = await event.message.respond(embed=locationEmbed, components=locationView)
     await fieldView.start(fieldMessage)  # Start listening for interactions
+    
+    locationMessage = await event.message.respond(embed=locationEmbed, components=locationView)
     await locationView.start(locationMessage)
 
 
@@ -74,6 +112,9 @@ async def buttons(event: hikari.GuildMessageCreateEvent) -> None:
 async def on_started(event: hikari.StartingEvent) -> None:
     print("Bot is now ready.")
 
+@bot.listen(hikari.StartedEvent)
+async def started(event: hikari.StartedEvent) -> None:
+    await post_jobs()
 
 @bot.command
 @lightbulb.command("ping", "checks if the bots alive")
@@ -95,4 +136,11 @@ async def response(ctx):
 
 
 # Runs the bot
-bot.run()
+
+def run() -> None:
+    bot.run()
+
+__all__ = ["run", "post_jobs"]
+
+if __name__ == "__main__":
+    run()
