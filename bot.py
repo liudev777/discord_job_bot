@@ -14,29 +14,23 @@ bot = lightbulb.BotApp(token=os.environ['DISCORD_TOKEN'])
 # Define a new custom View that contains 3 items
 class FieldView(miru.View):
     # Define a new Button 
-    @miru.button(label="🖥️ Software Engineer", style=hikari.ButtonStyle.PRIMARY)
+    @miru.button(label="Internship", style=hikari.ButtonStyle.PRIMARY)
     async def basic_button1(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        await handle_role(ctx, 1117591569495752754, "Software Engineer")
+        await handle_role(ctx, 1117591569495752754, "Internship")
     
-    @miru.button(label="🔧 Mechanical Engineer", style=hikari.ButtonStyle.PRIMARY)
+    @miru.button(label="Junior Developer", style=hikari.ButtonStyle.PRIMARY)
     async def basic_button2(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        await handle_role(ctx, 1117591640601800726, "Mechanical Engineer")
+        await handle_role(ctx, 1117591640601800726, "Junior Developer")
     
-    @miru.button(label="🖌️ Concept Artist", style=hikari.ButtonStyle.PRIMARY)
+    @miru.button(label="Senior Developer", style=hikari.ButtonStyle.PRIMARY)
     async def basic_button4(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        await handle_role(ctx, 1117591718817189928, "Concept Artist")
+        await handle_role(ctx, 1117591718817189928, "Senior Developer")
 
 
 class LocationView(miru.View):
     @miru.button(label="Chicago", style=hikari.ButtonStyle.PRIMARY)
     async def button1(self, button: miru.Button, ctx: miru.ViewContext) -> None:
         await handle_role(ctx, 1119033975680270346, "Chicago")
-
-
-class JobTypeView(miru.View):
-    @miru.button(label="Internship", style=hikari.ButtonStyle.PRIMARY)
-    async def button1(self, button: miru.Button, ctx: miru.ViewContext) -> None:
-        await handle_role(ctx, 1120028088059830343, "Internship")
 
 
 # if user already has discord role, delete role, else add role
@@ -53,34 +47,6 @@ async def handle_role(ctx, role_id, job_title):
     
     await member.add_role(role_id)
     print(f"{user} chose {job_title}!")
-
-
-async def post_jobs():
-    print("posting jobs\n")
-    guild_id = 1115031539256926278
-    members = await bot.rest.fetch_members(guild_id)
-    unique_role_combination = set()
-    unique_role_colors = set()
-    excluded_role_colors = [Color(0x00000), Color(0xf1c40f)]
-
-    me = bot.get_me()
-
-    for member in members:
-        # skip if member is bot
-        if member.id == me.id:
-            continue
-        
-        roles = await member.fetch_roles()
-        role_ids = tuple([role.name for role in roles if role.color not in excluded_role_colors])
-        unique_role_combination.add(role_ids)
-        role_colors = tuple([role.color for role in roles if role.color not in excluded_role_colors])
-        unique_role_colors.add(role_colors)
-
-
-    print(len(unique_role_combination))
-    print(unique_role_combination)
-    print(unique_role_colors)
-    
 
 
 miru.install(bot) # Start miru
@@ -108,6 +74,51 @@ async def buttons(event: hikari.GuildMessageCreateEvent) -> None:
     await locationView.start(locationMessage)
 
 
+# returns all the existing unique combinations of discord roles
+async def fetch_unique_roles() -> set:
+    print("posting jobs\n")
+    guild_id = 1115031539256926278
+    members = await bot.rest.fetch_members(guild_id)
+    unique_role_combination = set()
+    unique_role_colors = set()
+    excluded_role_colors = [Color(0x00000), Color(0xf1c40f)]
+
+    me = bot.get_me()
+
+    for member in members:
+        # skip if member is bot
+        if member.id == me.id:
+            continue
+        
+        roles = await member.fetch_roles()
+        role_ids = tuple([role.name for role in roles if role.color not in excluded_role_colors])
+        unique_role_combination.add(role_ids)
+        role_colors = tuple([role.color for role in roles if role.color not in excluded_role_colors])
+        unique_role_colors.add(role_colors)
+
+    print(len(unique_role_combination))
+    print(unique_role_combination)
+    print(unique_role_colors)
+    return unique_role_combination
+    
+# Sends a list of jobs to the discord channel
+async def post_jobs() -> None:
+    unique_role_combination = await fetch_unique_roles()
+    for role_combinations in unique_role_combination:
+        if not role_combinations:
+            continue
+        
+        job_search_string = "Software Developer " + " ".join([role for role in role_combinations])
+        print(job_search_string, "\n")
+        for job_data in Jsearch(job_search_string).get_job():
+            print(
+                job_data.get("employer_name", "N/A"),
+                job_data.get("job_title", "N/A"),
+                job_data.get("job_apply_link", "N/A"),
+                )
+            print("\n")
+    
+
 @bot.listen(hikari.StartingEvent)
 async def on_started(event: hikari.StartingEvent) -> None:
     print("Bot is now ready.")
@@ -115,6 +126,7 @@ async def on_started(event: hikari.StartingEvent) -> None:
 @bot.listen(hikari.StartedEvent)
 async def started(event: hikari.StartedEvent) -> None:
     await post_jobs()
+    pass
 
 @bot.command
 @lightbulb.command("ping", "checks if the bots alive")
