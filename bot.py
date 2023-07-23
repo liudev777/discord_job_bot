@@ -103,6 +103,7 @@ async def fetch_unique_roles() -> set:
     
 # Sends a list of jobs to the discord channel
 async def post_jobs() -> None:
+    channel_id = 1129920047444402376
     unique_role_combination = await fetch_unique_roles()
     for role_combinations in unique_role_combination:
         if not role_combinations:
@@ -111,13 +112,29 @@ async def post_jobs() -> None:
         job_search_string = "Software Developer " + " ".join([role for role in role_combinations])
         print(job_search_string, "\n")
         for job_data in Jsearch(job_search_string).get_job():
-            print(
-                job_data.get("employer_name", "N/A"),
-                job_data.get("job_title", "N/A"),
-                job_data.get("job_apply_link", "N/A"),
-                )
-            print("\n")
+            await bot.rest.create_message(channel_id, embed= await embed_job(job_data))
+
     
+async def embed_job(job_data) -> Embed:
+    responsibilities = "\n".join("- " + r for r in job_data.get("job_responsibilities")) if job_data.get("job_responsibilities") else "N/A"
+    qualifications = "\n".join("- " + r for r in job_data.get("job_qualifications")) if job_data.get("job_qualifications") else "N/A"
+
+    description = (
+        f'Job Title: {job_data.get("job_title", "N/A")}\n\n'
+        f'Employment type: {job_data.get("job_employment_type", "N/A")}\n\n'
+        f'Description: {job_data.get("job_description", "N/A")[:500]}...\n\n'
+        f'Qualifications:\n {qualifications}\n\n'
+        f'Responsibilities:\n {responsibilities}\n\n'
+        f'{job_data.get("job_city")} {job_data.get("job_state")}\n\n'
+    )
+
+    embed = Embed(
+        title = job_data.get("employer_name", "N/A"),
+        description = description,
+        url = job_data.get("job_apply_link", "N/A"),
+    )
+    embed.set_thumbnail(job_data.get("employer_logo"))
+    return embed
 
 @bot.listen(hikari.StartingEvent)
 async def on_started(event: hikari.StartingEvent) -> None:
