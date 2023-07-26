@@ -6,7 +6,7 @@ import random
 
 # url to JS file of neetcode script that populates data
 
-class Leetcode:
+class Neetcode:
 
     def __init__(self):
         self.url = "https://neetcode.io/main.e9d3b0a379eb0fd4.js"
@@ -51,7 +51,18 @@ class Leetcode:
         endpoint = self.data_json[self.rand].get("link")
         return f'https://leetcode.com/problems/{endpoint}'
         
+    def get_name(self) -> str:
+        endpoint = self.data_json[self.rand].get("problem")
+        return str(endpoint)
+    
+    def get_solution_raw(self) -> str:
+        endpoint = self.data_json[self.rand].get("code")
+        r = requests.get(f"https://raw.githubusercontent.com/neetcode-gh/leetcode/main/python/{endpoint}.py")
+        if r.status_code != 200:
+            print(r.status_code)
+            return "No Solution"
+        return r.text
  
 if __name__ == '__main__':
-    l = Leetcode()
+    l = Neetcode()
     print(l.get_leetcode_url(), l.get_solution_url(), l.get_youtube_url())

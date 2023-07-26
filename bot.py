@@ -10,6 +10,7 @@ import miru
 
 dotenv.load_dotenv()
 bot = lightbulb.BotApp(token=os.environ['DISCORD_TOKEN'])
+bot.load_extensions("extensions.leetcode")
 
 # Define a new custom View that contains 3 items
 class FieldView(miru.View):
@@ -142,15 +143,8 @@ async def on_started(event: hikari.StartingEvent) -> None:
 
 @bot.listen(hikari.StartedEvent)
 async def started(event: hikari.StartedEvent) -> None:
-    await post_jobs()
+    # await post_jobs()
     pass
-
-@bot.command
-@lightbulb.command("ping", "checks if the bots alive")
-@lightbulb.implements(lightbulb.SlashCommand)
-async def ping(ctx):
-    await ctx.respond("here we go!")
-
 
 @bot.command
 @lightbulb.option("query", "thing you wanna search for idk")
