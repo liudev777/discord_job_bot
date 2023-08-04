@@ -3,15 +3,13 @@ import lightbulb
 from neetcode import Neetcode
 from hikari import Embed
 
+"""
+Leetcode related bot commands
+"""
+
 leetcode_plugin = lightbulb.Plugin("leetcode", "displays leetcode related items")
 
 leet = Neetcode()
-
-@leetcode_plugin.command
-@lightbulb.command("ping", "checks if the bots alive")
-@lightbulb.implements(lightbulb.SlashCommand)
-async def ping(ctx):
-    await ctx.respond("here we go!")
 
 @leetcode_plugin.command
 @lightbulb.command("leet", "posts leetcode questions")
@@ -25,7 +23,6 @@ async def leet(ctx, leet=leet):
     )
     embed.set_thumbnail("https://leetcode.com/static/images/LeetCode_logo_rvs.png")
     await ctx.respond(embed=embed)
-
 
 
 def load(bot):
