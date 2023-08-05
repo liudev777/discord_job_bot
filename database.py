@@ -69,12 +69,22 @@ class Location:
         query = f'SELECT * FROM locations;'
         return self.db.query(query)
     
+    def get_user_locations(self, user: User):
+        discord_id = user.discord_id
+        query = f'SELECT location FROM locations WHERE discord_id = {discord_id}::text;'
+        return self.db.query(query)
+    
+
 class Position:
     def __init__(self, db):
         self.db = db
 
     def get_all_positions(self):
         query = f'SELECT * FROM positions;'
+        return self.db.query(query)
+    
+    def get_user_positions(self, discord_id):
+        query = f'SELECT position FROM positions WHERE discord_id = {discord_id}::text;'
         return self.db.query(query)
 
 

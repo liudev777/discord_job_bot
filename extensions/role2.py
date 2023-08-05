@@ -73,6 +73,9 @@ async def set_position(ctx):
     await ctx.respond("test")
 
 
+# @role2_plugin.option
+
+
 def load(bot):
     bot.add_plugin(role2_plugin)
 
