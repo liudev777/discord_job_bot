@@ -35,7 +35,7 @@ class Database:
         if self.conn:
             self.conn.close()
 
-    def query(self, query):
+    def query(self, query) -> list:
         self._connect()
         try:
             self.cursor.execute(query)
@@ -46,11 +46,41 @@ class Database:
                 return "commited"
         except Exception as e:
             print("An error occured: ", e)
+            return []
         finally:
             self._close()
+
+
+class User:
+    def __init__(self, db, discord_id):
+        self.db = db
+        self.discord_id = discord_id
+
+    def get_all_role(self): #need to fix func name and query
+        query = f'SELECT role_id FROM user_roles WHERE discord_id = {self.discord_id}::text;'
+        return self.db.query(query)
+    
+
+class Location:
+    def __init__(self, db):
+        self.db = db
+
+    def get_all_locations(self):
+        query = f'SELECT * FROM locations;'
+        return self.db.query(query)
+    
+class Position:
+    def __init__(self, db):
+        self.db = db
+
+    def get_all_positions(self):
+        query = f'SELECT * FROM positions;'
+        return self.db.query(query)
 
 
 if __name__ == "__main__":
     db = Database()
     r = db.query("SELECT discord_id FROM user_roles")
     print(r)
+
+    
