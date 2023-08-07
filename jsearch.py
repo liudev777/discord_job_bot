@@ -13,7 +13,7 @@ class Jsearch:
     def __init__(self, query):
         self.url = "https://jsearch.p.rapidapi.com/search"
         job_type = "intern" if "Internship" in query else None
-        self.querystring = {"query": f"{query}","page":"1","num_pages":"1","date_posted": "3days", "employment_types": job_type}
+        self.querystring = {"query": f"{query}","page":"1","num_pages":"1","date_posted": "today", "employment_types": job_type}
 
         self.headers = {
             "X-RapidAPI-Key": os.environ['RAPID_API_KEY'],

@@ -11,8 +11,9 @@ bot = lightbulb.BotApp(token=os.environ['DISCORD_TOKEN'])
 bot.load_extensions("extensions.leetcode")
 miru.install(bot)
 bot.load_extensions("extensions.roles")
-bot.load_extensions("extensions.role2")
+# bot.load_extensions("extensions.role2")
 bot.load_extensions("extensions.jobs")
+bot.load_extensions("extensions.channel")
 
 
 @bot.listen(hikari.StartingEvent)

@@ -1,4 +1,4 @@
-import psycopg2
+import asyncpg
 import os
 import dotenv
 
@@ -22,33 +22,42 @@ class Database:
         self.host = host
         self.port = 5432
 
-    def _connect(self):
-        self.conn = psycopg2.connect(
-            dbname=self.dbname,
+    async def _connect(self):
+        self.conn = await asyncpg.connect(
+            database=self.dbname,
             user=self.user,
             password=self.password,
-            host=self.host
+            host=self.host,
+            port=self.port
         )
-        self.cursor = self.conn.cursor()
+        return self.conn
 
-    def _close(self):
+    async def _close(self):
         if self.conn:
-            self.conn.close()
+            await self.conn.close()
 
-    def query(self, query) -> list:
-        self._connect()
+    async def fetch(self, query, *params) -> list:
+        conn = await self._connect()
         try:
-            self.cursor.execute(query)
-            if query.strip().upper().startswith('SELECT'):
-                return self.cursor.fetchall()
-            else:
-                self.conn.commit()
-                return "commited"
+            await conn.fetch(query, *params)
+            return await conn.fetch(query, *params)
         except Exception as e:
             print("An error occured: ", e)
+            raise e
             return []
         finally:
-            self._close()
+            await self._close()
+
+    async def query(self, query, *params):
+        conn = await self._connect()
+        try:
+            async with conn.transaction():
+                return await conn.execute(query, *params)
+        except Exception as e:
+            raise e
+            print("An error occured: ", e)
+        finally:
+            await self._close()
 
 
 class User:
@@ -56,36 +65,64 @@ class User:
         self.db = db
         self.discord_id = discord_id
 
-    def get_all_role(self): #need to fix func name and query
-        query = f'SELECT role_id FROM user_roles WHERE discord_id = {self.discord_id}::text;'
-        return self.db.query(query)
+    async def get_all_role(self): #need to fix func name and query
+        query = f'SELECT role_id FROM user_roles WHERE discord_id = ($1);'
+        return await self.db.fetch(query, self.discord_id)
     
 
 class Location:
     def __init__(self, db):
         self.db = db
 
-    def get_all_locations(self):
+    async def get_all_locations(self):
         query = f'SELECT * FROM locations;'
-        return self.db.query(query)
+        return await self.db.fetch(query)
     
-    def get_user_locations(self, user: User):
-        discord_id = user.discord_id
-        query = f'SELECT location FROM locations WHERE discord_id = {discord_id}::text;'
-        return self.db.query(query)
+    async def get_user_locations(self, discord_id):
+        query = 'SELECT location FROM locations WHERE discord_id = ($1);'
+        return await self.db.fetch(query, discord_id)
     
 
 class Position:
     def __init__(self, db):
         self.db = db
 
-    def get_all_positions(self):
+    async def get_all_positions(self):
         query = f'SELECT * FROM positions;'
-        return self.db.query(query)
+        return await self.db.fetch(query)
     
-    def get_user_positions(self, discord_id):
-        query = f'SELECT position FROM positions WHERE discord_id = {discord_id}::text;'
-        return self.db.query(query)
+    async def get_user_positions(self, discord_id):
+        query = 'SELECT position FROM positions WHERE discord_id = ($1);'
+        return await self.db.fetch(query, discord_id)
+    
+
+class Channel:
+    def __init__(self, db) -> None:
+        self.db = db
+
+    async def query_channel(self, guild_id, category_id, channel_id):
+        query = 'INSERT INTO guild_channel (guild_id, category_id, channel_id) VALUES ($1, $2, $3);'
+        return await self.db.query(query, guild_id, category_id, channel_id)
+    
+    async def query_category(self, guild_id, category_id):
+        query = 'INSERT INTO guild_category (guild_id, category_id) VALUES ($1, $2);'
+        return await self.db.query(query, guild_id, category_id)
+    
+    async def delete_channel(self, guild_id, category_id, channel_id):
+        query = 'DELETE FROM guild_channel WHERE guild_id = $1 AND category_id = $2 AND channel_id = $3;'
+        return await self.db.query(query, guild_id, category_id, channel_id)
+
+    async def delete_category(self, guild_id, category_id):
+        query = 'DELETE FROM guild_category WHERE guild_id = $1 AND category_id = $2;'
+        return await self.db.query(query, guild_id, category_id)
+    
+    async def fetch_all_guild_categories(self, guild_id):
+        query = 'SELECT * FROM guild_category WHERE guild_id = $1;'
+        return await self.db.fetch(query, guild_id)
+
+    async def fetch_all_guild_channels(self, guild_id):
+        query = 'SELECT * FROM guild_channel WHERE guild_id = $1;'
+        return await self.db.fetch(query, guild_id)
 
 
 if __name__ == "__main__":

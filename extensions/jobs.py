@@ -40,7 +40,7 @@ async def post_jobs() -> None:
     for role_combinations in unique_role_combination:
         if not role_combinations:
             continue
-        
+        print([role for role in role_combinations])
         job_search_string = "Software Developer " + " ".join([role for role in role_combinations])
         print(job_search_string, "\n")
         for job_data in Jsearch(job_search_string).get_job():
