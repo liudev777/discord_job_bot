@@ -100,13 +100,13 @@ class Channel:
     def __init__(self, db) -> None:
         self.db = db
 
-    async def query_channel(self, guild_id, category_id, channel_id):
-        query = 'INSERT INTO guild_channel (guild_id, category_id, channel_id) VALUES ($1, $2, $3);'
-        return await self.db.query(query, guild_id, category_id, channel_id)
+    async def query_channel(self, guild_id, category_id, channel_id, location_name):
+        query = 'INSERT INTO guild_channel (guild_id, category_id, channel_id, location_name) VALUES ($1, $2, $3, $4);'
+        return await self.db.query(query, guild_id, category_id, channel_id, location_name)
     
-    async def query_category(self, guild_id, category_id):
-        query = 'INSERT INTO guild_category (guild_id, category_id) VALUES ($1, $2);'
-        return await self.db.query(query, guild_id, category_id)
+    async def query_category(self, guild_id, category_id, position):
+        query = 'INSERT INTO guild_category (guild_id, category_id, position) VALUES ($1, $2, $3);'
+        return await self.db.query(query, guild_id, category_id, position)
     
     async def delete_channel(self, guild_id, category_id, channel_id):
         query = 'DELETE FROM guild_channel WHERE guild_id = $1 AND category_id = $2 AND channel_id = $3;'

@@ -5,6 +5,7 @@ from database import Database, Position, Location, Channel
 channels_plugin = lightbulb.Plugin("channels", "Creates different category and channels in the server")
 
 @channels_plugin.command
+@lightbulb.add_checks(lightbulb.owner_only)
 @lightbulb.command("init", "initializes all the necessary category and channels")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def init(ctx):
@@ -18,6 +19,7 @@ async def init(ctx):
 
 
 @channels_plugin.command
+@lightbulb.add_checks(lightbulb.owner_only)
 @lightbulb.command("delete", "Removes initialized channels")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def delete(ctx):
@@ -46,11 +48,11 @@ async def populate(guild_id) -> None:
         category = await populate_categories(guild_id, position)
         print("CATEGORY: ", position)
 
-        await Channel(Database()).query_category(str(guild_id), str(category.id))
+        await Channel(Database()).query_category(str(guild_id), str(category.id), position)
         for location in location_list:
             channel = await populate_channels(guild_id, category, location)
 
-            await Channel(Database()).query_channel(str(guild_id), str(category.id), str(channel.id))
+            await Channel(Database()).query_channel(str(guild_id), str(category.id), str(channel.id), location_name=location)
             print("-  CHANNEL: ", location)
 
 
