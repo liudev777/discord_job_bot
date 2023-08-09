@@ -14,6 +14,7 @@ bot.load_extensions("extensions.roles")
 # bot.load_extensions("extensions.role2")
 bot.load_extensions("extensions.jobs")
 bot.load_extensions("extensions.channel")
+bot.load_extensions("extensions.create_role")
 
 
 @bot.listen(hikari.StartingEvent)

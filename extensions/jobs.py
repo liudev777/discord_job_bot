@@ -3,12 +3,22 @@ import hikari
 import lightbulb
 from hikari import Embed, Color
 from jsearch import Jsearch
+from linkedin import Linkedin
+from database import Location, Position, Database
 
 """
 Job related bot commands
 """
 
 jobs_plugin = lightbulb.Plugin("jobs", "post job listings")
+
+async def get_all_location_list():
+    return [city[0] for city in await Location(Database()).get_all_locations()]
+
+
+async def get_all_position_list():
+    return [position[0] for position in await Position(Database()).get_all_positions()]
+
 
 # Sends a list of jobs to the discord channel
 async def embed_job(job_data) -> Embed:
@@ -34,9 +44,9 @@ async def embed_job(job_data) -> Embed:
     return embed
 
 
-async def post_jobs() -> None:
+async def post_jobs(ctx) -> None:
     channel_id = 1129920047444402376
-    unique_role_combination = await fetch_unique_roles()
+    unique_role_combination = await fetch_unique_roles(ctx)
     for role_combinations in unique_role_combination:
         if not role_combinations:
             continue
@@ -60,9 +70,9 @@ async def response(ctx):
 
     
 # returns all the existing unique combinations of discord roles
-async def fetch_unique_roles() -> set:
+async def fetch_unique_roles(ctx) -> set:
     print("posting jobs\n")
-    guild_id = 1115031539256926278
+    guild_id = ctx.guild_id
     members = await jobs_plugin.bot.rest.fetch_members(guild_id)
     unique_role_combination = set()
     unique_role_colors = set()
@@ -91,7 +101,42 @@ async def fetch_unique_roles() -> set:
 @lightbulb.command("list", "list job postings")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def list(ctx):
-    await post_jobs()
+    await post_jobs(ctx)
+
+
+@jobs_plugin.command
+@lightbulb.option("location", "Job location", required=False)
+@lightbulb.option("position", "Job position", required=False)
+@lightbulb.command("linkedin", "Posts jobs from linkedin")
+@lightbulb.implements(lightbulb.SlashCommand)
+async def linkedin(ctx):
+    await ctx.respond("Fetching jobs...")
+    await post_linkedin_jobs(ctx, ctx.options.location, ctx.options.position)
+
+def linkedin_embed(job):
+    embed = Embed(
+        title=job.get("company_name"),
+        description=job.get("job_title"),
+        url=job.get("job_link")
+    )
+    embed.set_image(job.get("job_image_url"))
+    return embed
+
+async def post_linkedin_jobs(ctx, location_name=None, position=None):
+    # channel_id = ctx.channel_id
+    # unique_role_combination = await fetch_unique_roles(ctx)
+    # for role_combinations in unique_role_combination:
+    #     if not role_combinations:
+    #         continue
+    #     print([role for role in role_combinations])
+    channel_id = ctx.channel_id
+    linkedin_job_list = Linkedin(location_name=location_name, position=position).get_job_list()
+    for job in linkedin_job_list:
+        embed = linkedin_embed(job)
+        await jobs_plugin.bot.rest.create_message(channel_id, embed=embed)
+    
+
+
 
 
 def load(bot):

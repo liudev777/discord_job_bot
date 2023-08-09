@@ -5,9 +5,15 @@ from database import Database, Position, Location, Channel
 channels_plugin = lightbulb.Plugin("channels", "Creates different category and channels in the server")
 
 @channels_plugin.command
+@lightbulb.command("channel", "Channel command group")
+@lightbulb.implements(lightbulb.SlashCommandGroup)
+async def _channel():
+    pass
+
+@_channel.child
 @lightbulb.add_checks(lightbulb.owner_only)
 @lightbulb.command("init", "initializes all the necessary category and channels")
-@lightbulb.implements(lightbulb.SlashCommand)
+@lightbulb.implements(lightbulb.SlashSubCommand)
 async def init(ctx):
     guild_id = ctx.guild_id
     if await is_init(ctx, await get_all_position_list()):
@@ -18,10 +24,10 @@ async def init(ctx):
     await ctx.respond("Done!")
 
 
-@channels_plugin.command
+@_channel.child
 @lightbulb.add_checks(lightbulb.owner_only)
 @lightbulb.command("delete", "Removes initialized channels")
-@lightbulb.implements(lightbulb.SlashCommand)
+@lightbulb.implements(lightbulb.SlashSubCommand)
 async def delete(ctx):
     await ctx.respond("Deleting...")
     await delete_all(ctx)

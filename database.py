@@ -123,7 +123,23 @@ class Channel:
     async def fetch_all_guild_channels(self, guild_id):
         query = 'SELECT * FROM guild_channel WHERE guild_id = $1;'
         return await self.db.fetch(query, guild_id)
+    
 
+class Role:
+    def __init__(self, db) -> None:
+        self.db = db
+
+    async def insert_role(self, guild_id, role_id):
+        query = "INSERT INTO guild_role (guild_id, role_id) VALUES ($1, $2);"
+        return await self.db.query(query, guild_id, role_id)
+
+    async def delete_role(self, guild_id, role_id):
+        query = "DELETE FROM guild_role WHERE guild_id = $1 AND role_id = $2;"
+        return await self.db.query(query, guild_id, role_id)
+    
+    async def fetch_all_roles(self, guild_id):
+        query = "SELECT * FROM guild_role WHERE guild_id = $1;"
+        return await self.db.fetch(query, guild_id)
 
 if __name__ == "__main__":
     db = Database()
