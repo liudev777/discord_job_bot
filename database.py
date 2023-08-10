@@ -61,13 +61,29 @@ class Database:
 
 
 class User:
-    def __init__(self, db, discord_id):
+    def __init__(self, db):
         self.db = db
-        self.discord_id = discord_id
 
     async def get_all_role(self): #need to fix func name and query
         query = f'SELECT role_id FROM user_roles WHERE discord_id = ($1);'
         return await self.db.fetch(query, self.discord_id)
+    
+    async def insert_role(self, discord_id, role_id, guild_id):
+        query = 'INSERT INTO user_role (discord_id, role_id, guild_id) VALUES ($1, $2, $3);'
+        return await self.db.query(query, discord_id, role_id, guild_id)
+
+    async def delete_role(self, discord_id, role_id, guild_id):
+        query = 'DELETE FROM user_role WHERE discord_id = $1 AND role_id = $2 AND guild_id = $3;'
+        return await self.db.query(query, discord_id, role_id, guild_id)
+    
+    async def role_is_in_db(self, role_id):
+        query = 'SELECT 1 FROM guild_role WHERE role_id = $1;'
+        r = await self.db.fetch(query, role_id)
+        return bool(r)
+    
+    async def user_has_role(self, role_id):
+        query = 'SELECT 1 FROM user_role WHERE role_id = $1;'
+        return bool(await self.db.fetch(query, role_id))
     
 
 class Location:
@@ -100,9 +116,9 @@ class Channel:
     def __init__(self, db) -> None:
         self.db = db
 
-    async def query_channel(self, guild_id, category_id, channel_id, location_name):
-        query = 'INSERT INTO guild_channel (guild_id, category_id, channel_id, location_name) VALUES ($1, $2, $3, $4);'
-        return await self.db.query(query, guild_id, category_id, channel_id, location_name)
+    async def query_channel(self, guild_id, category_id, channel_id, location_name, position):
+        query = 'INSERT INTO guild_channel (guild_id, category_id, channel_id, location_name, position) VALUES ($1, $2, $3, $4, $5);'
+        return await self.db.query(query, guild_id, category_id, channel_id, location_name, position)
     
     async def query_category(self, guild_id, category_id, position):
         query = 'INSERT INTO guild_category (guild_id, category_id, position) VALUES ($1, $2, $3);'
@@ -123,6 +139,10 @@ class Channel:
     async def fetch_all_guild_channels(self, guild_id):
         query = 'SELECT * FROM guild_channel WHERE guild_id = $1;'
         return await self.db.fetch(query, guild_id)
+    
+    async def fetch_position_locations(self, guild_id, position):
+        query = 'SELECT * FROM guild_channel WHERE guild_id = $1 AND position = $2;'
+        return await self.db.fetch(query, guild_id, position)
     
 
 class Role:

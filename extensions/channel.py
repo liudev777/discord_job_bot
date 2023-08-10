@@ -51,23 +51,24 @@ async def populate(guild_id) -> None:
     postition_list = await get_all_position_list()
     location_list = await get_all_location_list()
     for position in postition_list:
-        category = await populate_categories(guild_id, position)
+        category = await populate_categorie(guild_id, position)
         print("CATEGORY: ", position)
 
         await Channel(Database()).query_category(str(guild_id), str(category.id), position)
         for location in location_list:
-            channel = await populate_channels(guild_id, category, location)
+            channel = await populate_channel(guild_id, category, location)
 
-            await Channel(Database()).query_channel(str(guild_id), str(category.id), str(channel.id), location_name=location)
+            await Channel(Database()).query_channel(str(guild_id), str(category.id), str(channel.id), location_name=location, position=position)
             print("-  CHANNEL: ", location)
+        
 
 
 #populates and returns the category object
-async def populate_categories(guild_id, position):
+async def populate_categorie(guild_id, position):
     return await channels_plugin.bot.rest.create_guild_category(guild=guild_id, name=position)
 
 
-async def populate_channels(guild_id, category, location):
+async def populate_channel(guild_id, category, location):
     return await channels_plugin.bot.rest.create_guild_text_channel(guild=guild_id, name=(f'{category}-{location}'), category=category)
 
 

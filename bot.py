@@ -3,11 +3,14 @@ import hikari
 import os
 import dotenv
 import miru
+from database import User, Database
 from hikari import Embed
+
 
 # load plugins from the extensions folder
 dotenv.load_dotenv()
-bot = lightbulb.BotApp(token=os.environ['DISCORD_TOKEN'])
+bot = lightbulb.BotApp(token=os.environ['DISCORD_TOKEN'], intents=hikari.Intents.ALL_UNPRIVILEGED | hikari.Intents.MESSAGE_CONTENT | hikari.Intents.GUILD_MEMBERS)
+
 bot.load_extensions("extensions.leetcode")
 miru.install(bot)
 bot.load_extensions("extensions.roles")
@@ -42,6 +45,26 @@ async def help(ctx):
 
     await ctx.respond(embed=embed)
 
+# @bot.listen()
+# async def member_update(event: hikari.MemberUpdateEvent):
+#     print("member updated")
+#     before_roles = set(event.old_member.role_ids)
+#     after_roles = set(event.member.role_ids)
+
+#     added_roles = after_roles - before_roles
+#     removed_roles = before_roles - after_roles
+#     user_db = User(Database())
+
+#     for role_id in added_roles:
+#         if not await user_db.role_is_in_db(str(role_id)):
+#             print('skip')
+#             continue
+#         await user_db.insert_role(str(event.member.id), str(role_id), str(event.guild_id))
+    
+#     for role_id in removed_roles:
+#         if not await user_db.user_has_role(str(role_id)):
+#             continue
+#         await user_db.delete_role(str(event.member.id), str(role_id), str(event.guild_id))
 
 # Runs the bot
 def run() -> None:

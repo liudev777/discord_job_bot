@@ -1,10 +1,12 @@
 import json
+from random import randint
+import time
 import hikari
 import lightbulb
 from hikari import Embed, Color
 from jsearch import Jsearch
 from linkedin import Linkedin
-from database import Location, Position, Database
+from database import Location, Position, Database, Channel
 
 """
 Job related bot commands
@@ -113,6 +115,17 @@ async def linkedin(ctx):
     await ctx.respond("Fetching jobs...")
     await post_linkedin_jobs(ctx, ctx.options.location, ctx.options.position)
 
+
+@jobs_plugin.command
+@lightbulb.command("daily", "daily job listings")
+@lightbulb.implements(lightbulb.SlashCommand)
+async def daily(ctx):
+    await ctx.respond("Getting daily job listings...")
+    await post_in_respective_channel(ctx)
+    await ctx.respond("Thats all for today!")
+
+
+
 def linkedin_embed(job):
     embed = Embed(
         title=job.get("company_name"),
@@ -122,21 +135,27 @@ def linkedin_embed(job):
     embed.set_image(job.get("job_image_url"))
     return embed
 
-async def post_linkedin_jobs(ctx, location_name=None, position=None):
+async def post_linkedin_jobs(ctx, location_name=None, position=None, channel_id = None):
     # channel_id = ctx.channel_id
     # unique_role_combination = await fetch_unique_roles(ctx)
     # for role_combinations in unique_role_combination:
     #     if not role_combinations:
     #         continue
     #     print([role for role in role_combinations])
-    channel_id = ctx.channel_id
+    if not channel_id:
+        channel_id = ctx.channel_id
     linkedin_job_list = Linkedin(location_name=location_name, position=position).get_job_list()
     for job in linkedin_job_list:
         embed = linkedin_embed(job)
         await jobs_plugin.bot.rest.create_message(channel_id, embed=embed)
     
 
-
+async def post_in_respective_channel(ctx):
+    for position in await get_all_position_list():
+        locations = [(location["channel_id"], location["location_name"], location["position"]) for location in await Channel(Database()).fetch_position_locations(str(ctx.guild_id), position=position)]
+        for channel_id, location_name, position in locations:
+            await post_linkedin_jobs(ctx, location_name=location_name, position=position, channel_id=channel_id)
+        time.sleep(randint(3,5))
 
 
 def load(bot):
