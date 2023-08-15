@@ -7,6 +7,8 @@ class Linkedin:
         self.proxies = self._establish_connection()
         self.f_PP = self._fetch_f_PP(location_name)
         self.f_E = self._fetch_f_E(position)
+        self.is_intern = (position == 'internship')
+        print(self.is_intern)
         self.url = f'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=Software%2BEngineer&location=United%2BStates&locationId=&geoId=103644278&f_TPR=r604800&f_PP={self.f_PP}&f_E={self.f_E}&start='
         self.job_list = []
 
@@ -68,21 +70,37 @@ class Linkedin:
         return jobs
 
 
-    def _extend_jobs(self):
+    def _extend_jobs(self, url):
         if not self.proxies:
             print("No proxie provided")
             return 
         
         for n in range(0, 1, 25):
-            url = self.url + str(n)
+            url = url + str(n)
             try:
                 html = requests.get(url, proxies=self.proxies, timeout=3)
                 self.job_list.extend(self._parse_html(html.text))
             except Exception as e:
                 print("Something went wrong: ", e)
 
+        if not self.is_intern:
+            return
+        
+        url = f'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=Software%2BEngineer%2BIntern&location=United%2BStates&locationId=&geoId=103644278&f_TPR=r604800&f_PP={self.f_PP}&f_E=1&start='
+        print(self.f_PP)
+        for n in range(0, 1, 25):
+            url = url + str(n)
+            try:
+                intern_keywords = ["intern", "internship"]
+                html = requests.get(url, proxies=self.proxies, timeout=3)
+                jobs = [job for job in self._parse_html(html.text) if any(i in job.get("job_title").lower() for i in intern_keywords)]
+                self.job_list.extend(jobs)
+            except Exception as e:
+                print("Something went wrong: ", e)
+            
+
     def get_job_list(self) -> list:
-        self._extend_jobs()
+        self._extend_jobs(self.url)
         return self.job_list
     
     def _establish_connection(self):

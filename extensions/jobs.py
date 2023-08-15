@@ -14,15 +14,15 @@ Job related bot commands
 
 jobs_plugin = lightbulb.Plugin("jobs", "post job listings")
 
-async def get_all_location_list():
+async def get_all_location_list() -> list:
     return [city[0] for city in await Location(Database()).get_all_locations()]
 
 
-async def get_all_position_list():
+async def get_all_position_list() -> list:
     return [position[0] for position in await Position(Database()).get_all_positions()]
 
 
-# Sends a list of jobs to the discord channel
+# creates job embed for Jsearch jobs
 async def embed_job(job_data) -> Embed:
     print(job_data.get("employer_name"))
     responsibilities = "\n".join("- " + r for r in job_data.get("job_responsibilities")) if job_data.get("job_responsibilities") else "N/A"
@@ -46,6 +46,7 @@ async def embed_job(job_data) -> Embed:
     return embed
 
 
+# posts Jsearch jobs
 async def post_jobs(ctx) -> None:
     channel_id = 1129920047444402376
     unique_role_combination = await fetch_unique_roles(ctx)

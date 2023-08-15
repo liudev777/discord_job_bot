@@ -60,6 +60,9 @@ async def populate(guild_id) -> None:
 
             await Channel(Database()).query_channel(str(guild_id), str(category.id), str(channel.id), location_name=location, position=position)
             print("-  CHANNEL: ", location)
+
+        channel = await populate_channel(guild_id, category, "Misc")
+        await Channel(Database()).query_channel(str(guild_id), str(category.id), str(channel.id), location_name=None, position=position)
         
 
 
